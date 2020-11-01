@@ -19,15 +19,17 @@ namespace PasteAsFile
     {
         public const string DEFAULT_FILENAME_FORMAT = "yyyy-MM-dd HH.mm.ss";
         public string CurrentLocation { get; set; }
+        public bool NonStop { get; }
         public bool IsText { get; set; }
         public frmMain()
         {
             InitializeComponent();
         }
-        public frmMain(string location)
+        public frmMain(Boolean nonstop, string location)
         {
             InitializeComponent();
             this.CurrentLocation = location;
+            this.NonStop = nonstop;
         }
         private void frmMain_Load(object sender, EventArgs e)
         {
@@ -39,9 +41,11 @@ namespace PasteAsFile
             {
                 if (MessageBox.Show("Seems that you are running this application for the first time,\nDo you want to Register it with your system Context Menu ?", "Paste Into File", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    Program.RegisterApp();
+                    Program.RegisterApp(false);
                 }
             }
+
+            Boolean itemIdentified = false;
 
             if (Clipboard.ContainsText())
             {
@@ -49,7 +53,7 @@ namespace PasteAsFile
                 comExt.SelectedItem = "txt";
                 IsText = true;
                 txtContent.Text = Clipboard.GetText();
-                return;
+                itemIdentified = true;
             }
 
             if (Clipboard.ContainsImage())
@@ -57,23 +61,30 @@ namespace PasteAsFile
                 lblType.Text = "Image";
                 comExt.SelectedItem = "png";
                 imgContent.Image = Clipboard.GetImage();
-                return;
+                itemIdentified = true;
             }
-
-            lblType.Text = "Unknown File";
-            btnSave.Enabled = false;
-
-
+            
+            if (itemIdentified)
+            {
+                if (this.NonStop)
+                {
+                    save();
+                    Environment.Exit(0);
+                }
+            } else
+            {
+                lblType.Text = "Unknown File";
+                btnSave.Enabled = false;
+            }
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        private void save()
         {
             string location = txtCurrentLocation.Text;
             location = location.EndsWith("\\") ? location : location + "\\";
             string filename = txtFilename.Text + "." + comExt.SelectedItem.ToString();
             if (IsText)
             {
-
                 File.WriteAllText(location + filename, txtContent.Text, Encoding.UTF8);
                 this.Text += " : File Saved :)";
             }
@@ -104,6 +115,12 @@ namespace PasteAsFile
                 this.Text += " : Image Saved :)";
             }
 
+            
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            this.save();
             Task.Factory.StartNew(() =>
             {
                 Thread.Sleep(1000);

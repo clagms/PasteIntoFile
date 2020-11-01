@@ -40,6 +40,12 @@ Run the following commands in a terminal (Command Prompt or PowerShell).
    PasteIntoFile /reg
    ``` 
 
+- To add the *Paste Into File* entry in the File Explorer context menu _and save files with defaults_:
+
+   ```powershell
+   PasteIntoFile /reg-non-stop
+   ``` 
+
 - To remove the *Paste Into File* entry from the File Explorer context menu:
 
    ```powershell

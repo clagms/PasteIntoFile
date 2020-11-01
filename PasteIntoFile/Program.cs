@@ -10,10 +10,12 @@ namespace PasteAsFile
 {
 	static class Program
 	{
-		/// <summary>
-		/// The main entry point for the application.
-		/// </summary>
-		[STAThread]
+        static String NON_STOP_ARG = "-nonstop";
+
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
 		static void Main(string[] args)
 		{
 			Application.EnableVisualStyles();
@@ -22,7 +24,12 @@ namespace PasteAsFile
 			{
 				if (args[0] == "/reg")
 				{
-					RegisterApp();
+					RegisterApp(false);
+					return;
+				}
+				else if (args[0] == "/reg-non-stop")
+				{
+					RegisterApp(true);
 					return;
 				}
 				else if (args[0] == "/unreg")
@@ -30,14 +37,29 @@ namespace PasteAsFile
 					UnRegisterApp();
 					return;
 				}
-                else if (args[0] == "/filename")
+				else if (args[0] == "/filename")
                 {
                     if (args.Length > 1) {
                         RegisterFilename(args[1]);
                     }
                     return;
                 }
-				Application.Run(new frmMain(args[0]));
+
+				// Check for non-stop argument.
+				if (args[0] == NON_STOP_ARG)
+                {
+					// Check if location is provided as well.
+					if (args.Length > 1)
+                    {
+						Application.Run(new frmMain(true, args[1]));
+					} else
+                    { // No location is provided
+						MessageBox.Show("-nonstop argument needs a location.", "Paste As File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}
+                } else
+                { // Only location is provided
+					Application.Run(new frmMain(false, args[0]));
+				}
 			}
 			else
 			{
@@ -83,19 +105,20 @@ namespace PasteAsFile
 			}
 		}
 
-		public static void RegisterApp()
+		public static void RegisterApp(Boolean nonStop)
 		{
+			String nonStopArg = nonStop? NON_STOP_ARG : String.Empty;
 			try
 			{
 				var key = OpenDirectoryKey().CreateSubKey(@"Background\shell").CreateSubKey("Paste Into File");
 				key.SetValue("Icon", "\"" + Application.ExecutablePath + "\",0");
 				key = key.CreateSubKey("command");
-				key.SetValue("" , "\"" + Application.ExecutablePath + "\" \"%V\"");
+				key.SetValue("" , "\"" + Application.ExecutablePath + "\" " + NON_STOP_ARG + " \"%V\"");
 
 				key = OpenDirectoryKey().CreateSubKey("shell").CreateSubKey("Paste Into File");
 				key.SetValue("Icon", "\"" + Application.ExecutablePath + "\",0");
 				key = key.CreateSubKey("command");
-				key.SetValue("" , "\"" + Application.ExecutablePath + "\" \"%1\"");
+				key.SetValue("", "\"" + Application.ExecutablePath + "\" " + NON_STOP_ARG + " \"%V\"");
 				MessageBox.Show("Application has been registered with your system", "Paste Into File", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 			}
